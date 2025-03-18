@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hi teachers wsg? Teachers please follow my X @InknBoyM thankns.</title>
+    <title>Hi teachers wsg? Teachers please follow my X @InkBoyM thankns.</title>
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, onChildAdded, push } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+        import { getDatabase, ref, onChildAdded, push, onChildRemoved } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
         import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
         // Firebase configuration
@@ -36,17 +36,35 @@
         const fileInput = document.getElementById("fileInput");
         const logoutButton = document.getElementById("logoutButton");
         const usernameInput = document.getElementById("usernameInput");
+        const passwordInput = document.getElementById("passwordInput");
+        const onlineUsersList = document.getElementById("onlineUsersList");
 
         let username = "";
+        let currentUser = "";
 
         // Handle the login form
         loginForm.addEventListener("submit", (e) => {
             e.preventDefault();
             username = usernameInput.value.trim();
-            if (username !== "") {
+
+            // Check if username is "InkBoyM" or "innkboym"
+            if (username.toLowerCase() === "inkboym") {
+                const password = prompt("Please enter your password:");
+                if (password === "inkling123") {
+                    currentUser = username;
+                    loginForm.style.display = "none";
+                    chatContainer.style.display = "block";
+                    loadMessages();
+                    addUserToOnlineList(username);
+                } else {
+                    alert("Incorrect password.");
+                }
+            } else if (username !== "") {
+                currentUser = username;
                 loginForm.style.display = "none";
                 chatContainer.style.display = "block";
                 loadMessages();
+                addUserToOnlineList(username);
             } else {
                 alert("Please enter a username.");
             }
@@ -54,11 +72,38 @@
 
         // Logout function
         logoutButton.addEventListener("click", () => {
+            removeUserFromOnlineList(username);
+            currentUser = "";
             username = "";
             loginForm.style.display = "block";
             chatContainer.style.display = "none";
             chatBox.innerHTML = "";  // Clear chat box on logout
         });
+
+        // Add user to online users list
+        function addUserToOnlineList(username) {
+            const onlineRef = ref(database, "onlineUsers/" + username);
+            push(onlineRef, { username });
+            updateOnlineUsersList();
+        }
+
+        // Remove user from online users list
+        function removeUserFromOnlineList(username) {
+            const onlineRef = ref(database, "onlineUsers/" + username);
+            // You need to handle removing this from Firebase properly
+            updateOnlineUsersList();
+        }
+
+        // Update the online users list in the DOM
+        function updateOnlineUsersList() {
+            const onlineUsersRef = ref(database, "onlineUsers");
+            onChildAdded(onlineUsersRef, (snapshot) => {
+                const user = snapshot.val();
+                let onlineUserElement = document.createElement("li");
+                onlineUserElement.textContent = user.username;
+                onlineUsersList.appendChild(onlineUserElement);
+            });
+        }
 
         // Load messages from database
         function loadMessages() {
@@ -66,6 +111,10 @@
             onChildAdded(messagesRef, (snapshot) => {
                 const message = snapshot.val();
                 const messageElement = document.createElement("div");
+
+                if (message.username === "InkBoyM" || message.username === "innkboym") {
+                    messageElement.style.color = "red"; // Make InkBoyM's messages red
+                }
 
                 if (message.image) {
                     messageElement.innerHTML = `<strong>${message.username}:</strong> <br><img src="${message.image}" width="200">`;
@@ -82,7 +131,7 @@
         sendButton.addEventListener("click", () => {
             const text = messageInput.value.trim();
             if (text !== "") {
-                push(ref(database, "messages"), { username, text });
+                push(ref(database, "messages"), { username: currentUser, text });
                 messageInput.value = "";
             }
         });
@@ -93,7 +142,7 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    push(ref(database, "messages"), { username, image: reader.result });
+                    push(ref(database, "messages"), { username: currentUser, image: reader.result });
                 };
                 reader.readAsDataURL(file);
             }
@@ -107,6 +156,7 @@
         #messageInput { width: 70%; padding: 10px; }
         #sendButton, #logoutButton { padding: 10px; cursor: pointer; margin-top: 5px; }
         input, button { margin: 5px; padding: 8px; }
+        #onlineUsersList { text-align: left; }
     </style>
 </head>
 <body>
@@ -127,6 +177,10 @@
         <input type="text" id="messageInput" placeholder="Type your message...">
         <button id="sendButton">Send</button>
         <input type="file" id="fileInput" accept="image/*">
+        <div>
+            <h3>Online Users</h3>
+            <ul id="onlineUsersList"></ul>
+        </div>
     </div>
 
 </body>
