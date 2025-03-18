@@ -7,7 +7,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, onChildAdded, push, onChildRemoved } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+        import { getDatabase, ref, onChildAdded, push, onChildRemoved, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
         import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
         // Firebase configuration
@@ -37,7 +37,7 @@
         const logoutButton = document.getElementById("logoutButton");
         const usernameInput = document.getElementById("usernameInput");
         const passwordInput = document.getElementById("passwordInput");
-        const onlineUsersList = document.getElementById("onlineUsersList");
+        const openChatButton = document.getElementById("openChatButton");
 
         let username = "";
         let currentUser = "";
@@ -47,7 +47,6 @@
             e.preventDefault();
             username = usernameInput.value.trim();
 
-            // Check if username is "InkBoyM" or "innkboym"
             if (username.toLowerCase() === "inkboym") {
                 const password = prompt("Please enter your password:");
                 if (password === "inkling123") {
@@ -90,18 +89,16 @@
         // Remove user from online users list
         function removeUserFromOnlineList(username) {
             const onlineRef = ref(database, "onlineUsers/" + username);
-            // You need to handle removing this from Firebase properly
+            remove(onlineRef);  // Properly remove the user from the online users list
             updateOnlineUsersList();
         }
 
-        // Update the online users list in the DOM
+        // Update the online users list (Not needed anymore, but left for consistency)
         function updateOnlineUsersList() {
             const onlineUsersRef = ref(database, "onlineUsers");
+            let onlineCount = 0;
             onChildAdded(onlineUsersRef, (snapshot) => {
-                const user = snapshot.val();
-                let onlineUserElement = document.createElement("li");
-                onlineUserElement.textContent = user.username;
-                onlineUsersList.appendChild(onlineUserElement);
+                onlineCount++;
             });
         }
 
@@ -111,6 +108,7 @@
             onChildAdded(messagesRef, (snapshot) => {
                 const message = snapshot.val();
                 const messageElement = document.createElement("div");
+                const time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
 
                 if (message.username === "InkBoyM" || message.username === "innkboym") {
                     messageElement.style.color = "red"; // Make InkBoyM's messages red
@@ -119,7 +117,7 @@
                 if (message.image) {
                     messageElement.innerHTML = `<strong>${message.username}:</strong> <br><img src="${message.image}" width="200">`;
                 } else {
-                    messageElement.textContent = `${message.username}: ${message.text}`;
+                    messageElement.innerHTML = `<strong>${message.username}:</strong> ${message.text} <span style="font-size: 0.8em; color: grey;">(${time})</span>`;
                 }
 
                 chatBox.appendChild(messageElement);
@@ -131,7 +129,7 @@
         sendButton.addEventListener("click", () => {
             const text = messageInput.value.trim();
             if (text !== "") {
-                push(ref(database, "messages"), { username: currentUser, text });
+                push(ref(database, "messages"), { username: currentUser, text, timestamp: Date.now() });
                 messageInput.value = "";
             }
         });
@@ -142,10 +140,20 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    push(ref(database, "messages"), { username: currentUser, image: reader.result });
+                    push(ref(database, "messages"), { username: currentUser, image: reader.result, timestamp: Date.now() });
                 };
                 reader.readAsDataURL(file);
             }
+        });
+
+        // Open the chat in a new about:blank page using <embed> tag
+        openChatButton.addEventListener("click", () => {
+            const newWindow = window.open("about:blank", "_blank");
+            const embed = newWindow.document.createElement("embed");
+            embed.src = "https://inkboym.github.io/chat";
+            embed.width = "100%";
+            embed.height = "100%";
+            newWindow.document.body.appendChild(embed);
         });
     </script>
 
@@ -154,9 +162,8 @@
         #chatContainer { display: none; }
         #chatBox { width: 80%; height: 300px; border: 1px solid #ddd; overflow-y: auto; margin: 10px auto; padding: 10px; text-align: left; }
         #messageInput { width: 70%; padding: 10px; }
-        #sendButton, #logoutButton { padding: 10px; cursor: pointer; margin-top: 5px; }
+        #sendButton, #logoutButton, #openChatButton { padding: 10px; cursor: pointer; margin-top: 5px; }
         input, button { margin: 5px; padding: 8px; }
-        #onlineUsersList { text-align: left; }
     </style>
 </head>
 <body>
@@ -177,10 +184,7 @@
         <input type="text" id="messageInput" placeholder="Type your message...">
         <button id="sendButton">Send</button>
         <input type="file" id="fileInput" accept="image/*">
-        <div>
-            <h3>Online Users</h3>
-            <ul id="onlineUsersList"></ul>
-        </div>
+        <button id="openChatButton">Open Chat in New Tab</button>
     </div>
 
 </body>
