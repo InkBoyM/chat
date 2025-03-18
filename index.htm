@@ -110,8 +110,11 @@
                 const messageElement = document.createElement("div");
                 const time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
 
+                // Apply styles based on the username
                 if (message.username === "InkBoyM" || message.username === "innkboym") {
-                    messageElement.style.color = "red"; // Make InkBoyM's messages red
+                    messageElement.style.color = "red"; // InkBoyM's messages in red
+                } else if (message.username === "plsbobuc") {
+                    messageElement.style.color = "yellow"; // plsbobuc's messages in yellow
                 }
 
                 if (message.image) {
@@ -164,6 +167,21 @@
         #messageInput { width: 70%; padding: 10px; }
         #sendButton, #logoutButton, #openChatButton { padding: 10px; cursor: pointer; margin-top: 5px; }
         input, button { margin: 5px; padding: 8px; }
+
+        /* Smooth animations for elements */
+        #chatBox div {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease-in-out;
+        }
     </style>
 </head>
 <body>
