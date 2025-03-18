@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clicker Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            /* Apply super small custom cursor */
+            cursor: url('https://file.garden/Z43SqDt67TpUFO8v/mouse-cursor-small.png') 0 0, auto;
+        }
+        #game-container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 800px;
+        }
+        #game {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 2;
+            text-align: center;
+        }
+        #leaderboard {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            margin-left: 20px;
+        }
+        input, textarea {
+            cursor: url('https://file.garden/Z43SqDt67TpUFO8v/dot2025_0318_0005_57.png') 0 0, text;
+        }
+        button {
+            background: none;
+            border: none;
+            width: 100px;
+            height: 100px;
+            background-image: url('https://file.garden/Z43SqDt67TpUFO8v/dot2025_0318_0010_51.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            cursor: url('https://file.garden/Z43SqDt67TpUFO8v/dot2025_0318_0010_51.png') 0 0, pointer;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        const authConfig = {
+            apiKey: "AIzaSyCGxw1TzmhRpNQqLDqLkXvNPwHHqYyqqz8",
+            authDomain: "socail-48c8f.firebaseapp.com",
+            projectId: "socail-48c8f",
+            storageBucket: "socail-48c8f.appspot.com",
+            messagingSenderId: "818399061642",
+            appId: "1:818399061642:web:11976cb57089244646ef73",
+            measurementId: "G-ZTP5CXRGJR"
+        };
+
+        const gameConfig = {
+            apiKey: "AIzaSyAGmqJP-WaEEzGYxHZwLXeJiRYz7sVsob8",
+            authDomain: "clicker-6f54c.firebaseapp.com",
+            databaseURL: "https://clicker-6f54c-default-rtdb.firebaseio.com",
+            projectId: "clicker-6f54c",
+            storageBucket: "clicker-6f54c.appspot.com",
+            messagingSenderId: "127912342772",
+            appId: "1:127912342772:web:0e67947e02c3846433daa1",
+            measurementId: "G-QVQXRP99VD"
+        };
+
+        const authApp = initializeApp(authConfig, "authApp");
+        const gameApp = initializeApp(gameConfig, "gameApp");
+
+        const auth = getAuth(authApp);
+        const database = getDatabase(gameApp);
+        let user = null;
+
+        document.getElementById("loginForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    user = userCredential.user;
+                    alert("Login successful!");
+                    document.getElementById("game-container").style.display = "flex";
+                    document.getElementById("auth").style.display = "none";
+
+                    const userRef = ref(database, 'users/' + user.uid);
+                    get(userRef).then(snapshot => {
+                        if (!snapshot.exists()) {
+                            set(userRef, { email: user.email, points: 0 });
+                        }
+                    });
+
+                    loadLeaderboard();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        });
+
+        document.getElementById("clickButton").addEventListener("click", () => {
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                get(userRef).then(snapshot => {
+                    let points = snapshot.exists() ? snapshot.val().points + 1 : 1;
+                    update(userRef, { points: points });
+                });
+            }
+        });
+
+        function loadLeaderboard() {
+            const leaderboardRef = ref(database, 'users');
+            onValue(leaderboardRef, (snapshot) => {
+                const leaderboard = [];
+                snapshot.forEach(childSnapshot => {
+                    leaderboard.push({ name: childSnapshot.val().email, points: childSnapshot.val().points });
+                });
+                leaderboard.sort((a, b) => b.points - a.points);
+                
+                let leaderboardHTML = "<h2>Leaderboard</h2><ul>";
+                leaderboard.forEach(user => {
+                    leaderboardHTML += `<li>${user.name}: ${user.points} points</li>`;
+                });
+                leaderboardHTML += "</ul>";
+                document.getElementById("leaderboard").innerHTML = leaderboardHTML;
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="auth">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+    <div id="game-container" style="display: none;">
+        <div id="game">
+            <h2>Click to start (idk why there are some duplicate emails)</h2>
+            <button id="clickButton"></button>
+        </div>
+        <div id="leaderboard"></div>
+    </div>
+</body>
+</html>
