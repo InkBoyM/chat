@@ -38,9 +38,11 @@
         const usernameInput = document.getElementById("usernameInput");
         const passwordInput = document.getElementById("passwordInput");
         const openChatButton = document.getElementById("openChatButton");
+        const darkModeButton = document.getElementById("darkModeButton");
 
         let username = "";
         let currentUser = "";
+        let isDarkMode = false;
 
         // Handle the login form
         loginForm.addEventListener("submit", (e) => {
@@ -114,7 +116,9 @@
                 if (message.username === "InkBoyM" || message.username === "innkboym") {
                     messageElement.style.color = "red"; // InkBoyM's messages in red
                 } else if (message.username === "plsbobuc") {
-                    messageElement.style.color = "yellow"; // plsbobuc's messages in yellow
+                    messageElement.style.color = "#e1c300"; // plsbobuc's messages in a darker yellow
+                } else if (message.username === "DalesLemonadeS") {
+                    messageElement.style.color = "#006400"; // DalesLemonadeS's messages in dark green
                 }
 
                 if (message.image) {
@@ -158,15 +162,40 @@
             embed.height = "100%";
             newWindow.document.body.appendChild(embed);
         });
+
+        // Dark mode toggle
+        darkModeButton.addEventListener("click", () => {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle("dark-mode", isDarkMode);
+        });
     </script>
 
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #chatContainer { display: none; }
-        #chatBox { width: 80%; height: 300px; border: 1px solid #ddd; overflow-y: auto; margin: 10px auto; padding: 10px; text-align: left; }
-        #messageInput { width: 70%; padding: 10px; }
-        #sendButton, #logoutButton, #openChatButton { padding: 10px; cursor: pointer; margin-top: 5px; }
-        input, button { margin: 5px; padding: 8px; }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
+        body.dark-mode { background-color: #121212; color: white; }
+        h2 { margin-top: 20px; font-size: 2rem; }
+        #chatContainer { display: none; padding: 20px; }
+        #chatBox { width: 80%; height: 300px; border: 1px solid #ddd; overflow-y: auto; margin: 10px auto; padding: 10px; text-align: left; background-color: white; border-radius: 8px; }
+        body.dark-mode #chatBox { background-color: #333; border-color: #444; }
+        #messageInput { width: 70%; padding: 10px; border-radius: 5px; }
+        #sendButton, #logoutButton, #openChatButton { padding: 10px; cursor: pointer; margin-top: 5px; border-radius: 5px; }
+        input, button { margin: 5px; padding: 8px; border-radius: 5px; }
+
+        #darkModeButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #darkModeButton:hover {
+            background-color: #555;
+        }
 
         /* Smooth animations for elements */
         #chatBox div {
@@ -187,6 +216,8 @@
 <body>
 
     <h2>chatty</h2>
+
+    <button id="darkModeButton">Toggle Dark Mode</button>
 
     <!-- Username Input Form -->
     <form id="loginForm">
