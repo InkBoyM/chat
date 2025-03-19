@@ -8,10 +8,13 @@
         body { font-family: Arial, sans-serif; background: #fff; color: #000; transition: 0.3s; }
         .dark-mode { background: #121212; color: #fff; }
         .chat-container { width: 300px; margin: auto; }
-        .message { display: flex; align-items: center; }
+        .message { display: flex; align-items: center; margin-bottom: 5px; }
         .message img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
         .chat-box { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
         .dark-mode .chat-box { border-color: #666; }
+        .profile-settings { cursor: pointer; font-size: 20px; position: absolute; top: 10px; right: 10px; }
+        #profileDiv { display: none; position: absolute; top: 50px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ccc; }
+        #profileDiv input { margin: 5px; }
     </style>
 </head>
 <body>
@@ -37,14 +40,21 @@
         <input type="file" id="imageUpload">
         <input type="text" id="messageInput" placeholder="Type a message">
         <button onclick="sendMessage()">Send</button>
+        <button onclick="openEmbed()">open in about:blank</button>
+        <span class="profile-settings" onclick="showProfileSettings()">✏️</span>
     </div>
-    
+
+    <div id="profileDiv">
+        <h3>Update Profile</h3>
+        <input type="text" id="newName" placeholder="Enter new name">
+        <input type="file" id="profilePic" accept="image/*">
+        <button onclick="updateProfile()">Save</button>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        
-        console.log("Initializing Firebase...");
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         
         const firebaseConfigAuth = {
             apiKey: "AIzaSyD_RU42yNMYtMWadeZnfmwBy3HMnEHyhWw",
@@ -130,8 +140,9 @@
             chatBox.innerHTML = '';
             onSnapshot(collection(db, currentRoom), snapshot => {
                 chatBox.innerHTML = '';
-                snapshot.forEach(doc => {
-                    let message = doc.data();
+                const messages = snapshot.docs.map(doc => doc.data());
+                messages.sort((a, b) => a.timestamp - b.timestamp); // Sort messages to show the oldest first
+                messages.forEach(message => {
                     let div = document.createElement('div');
                     div.classList.add('message');
                     div.innerHTML = `<strong>${message.user}</strong>: ${message.text}`;
@@ -148,6 +159,41 @@
         
         window.toggleDarkMode = function () {
             document.body.classList.toggle('dark-mode');
+        }
+        
+        window.openEmbed = function () {
+            const embedUrl = "https://inkboym.github.io/chat";
+            const iframe = `<embed src="${embedUrl}" width="100%" height="500px">`;
+            const newWindow = window.open();
+            newWindow.document.write(iframe);
+            newWindow.document.close();
+        }
+
+        window.showProfileSettings = function () {
+            document.getElementById('profileDiv').style.display = 'block';
+        }
+
+        window.updateProfile = function () {
+            const newName = document.getElementById('newName').value;
+            const profilePic = document.getElementById('profilePic').files[0];
+            
+            if (newName) {
+                setDoc(doc(db, "users", currentUser.uid), {
+                    name: newName
+                }, { merge: true });
+            }
+
+            if (profilePic) {
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    setDoc(doc(db, "users", currentUser.uid), {
+                        profilePic: reader.result
+                    }, { merge: true });
+                };
+                reader.readAsDataURL(profilePic);
+            }
+
+            document.getElementById('profileDiv').style.display = 'none';
         }
     </script>
 </body>
