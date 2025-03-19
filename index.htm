@@ -15,12 +15,13 @@
         .profile-settings { cursor: pointer; font-size: 20px; position: absolute; top: 10px; right: 10px; }
         #profileDiv { display: none; position: absolute; top: 50px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ccc; }
         #profileDiv input { margin: 5px; }
+        .message-time { font-size: 0.8em; color: grey; margin-left: 5px; }
     </style>
 </head>
 <body>
     <button onclick="toggleDarkMode()">Dark Mode</button>
     <div id="loginDiv">
-        <h2>Login</h2>
+        <h2>Enter your email to login (if you cant message 386396@cusdk8.org. creating emails for people i allow ONLY)</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button onclick="login()">Login</button>
@@ -28,19 +29,19 @@
     </div>
     
     <div id="chatDiv" style="display:none;">
-        <h2>Chat Room</h2>
+        <h2>Chatty</h2>
         <div>
             <button onclick="switchRoom('general')">General</button>
             <button onclick="switchRoom('memes')">Memes</button>
             <button onclick="switchRoom('school')">School Chat</button>
             <button onclick="switchRoom('spam')">Spam</button>
-            <button onclick="switchRoom('clever')">Clever</button>
+            <button onclick="switchRoom('update')">Update Board (no chat)</button>
         </div>
         <div class="chat-box" id="chatBox"></div>
         <input type="file" id="imageUpload">
         <input type="text" id="messageInput" placeholder="Type a message">
         <button onclick="sendMessage()">Send</button>
-        <button onclick="openEmbed()">open in about:blank</button>
+        <button onclick="openEmbed()">Open in about:blank</button>
         <span class="profile-settings" onclick="showProfileSettings()">✏️</span>
     </div>
 
@@ -145,7 +146,8 @@
                 messages.forEach(message => {
                     let div = document.createElement('div');
                     div.classList.add('message');
-                    div.innerHTML = `<strong>${message.user}</strong>: ${message.text}`;
+                    const messageTime = new Date(message.timestamp.seconds * 1000).toLocaleTimeString();
+                    div.innerHTML = `<strong>${message.user}</strong>: ${message.text} <span class="message-time">(${messageTime})</span>`;
                     chatBox.appendChild(div);
                 });
             });
