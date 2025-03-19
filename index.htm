@@ -3,238 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hi teachers wsg? Teachers please follow my X @InkBoyM thankns.</title>
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, onChildAdded, push, onChildRemoved, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCUD9YE6_Uz3x0JrqYWV081ojwiluGrxO0",
-            authDomain: "test-e95c8.firebaseapp.com",
-            databaseURL: "https://test-e95c8-default-rtdb.firebaseio.com",
-            projectId: "test-e95c8",
-            storageBucket: "test-e95c8.firebasestorage.app",
-            messagingSenderId: "496018778332",
-            appId: "1:496018778332:web:14a98835a299179e3a6c19",
-            measurementId: "G-ZVZEQDN22X"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth();
-
-        // DOM Elements
-        const loginForm = document.getElementById("loginForm");
-        const chatContainer = document.getElementById("chatContainer");
-        const chatBox = document.getElementById("chatBox");
-        const messageInput = document.getElementById("messageInput");
-        const sendButton = document.getElementById("sendButton");
-        const fileInput = document.getElementById("fileInput");
-        const logoutButton = document.getElementById("logoutButton");
-        const usernameInput = document.getElementById("usernameInput");
-        const passwordInput = document.getElementById("passwordInput");
-        const openChatButton = document.getElementById("openChatButton");
-        const darkModeButton = document.getElementById("darkModeButton");
-
-        let username = "";
-        let currentUser = "";
-        let isDarkMode = false;
-
-        // Handle the login form
-        loginForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            username = usernameInput.value.trim();
-
-            if (username.toLowerCase() === "inkboym") {
-                const password = prompt("Please enter your password:");
-                if (password === "inkling123") {
-                    currentUser = username;
-                    loginForm.style.display = "none";
-                    chatContainer.style.display = "block";
-                    loadMessages();
-                    addUserToOnlineList(username);
-                } else {
-                    alert("Incorrect password.");
-                }
-            } else if (username !== "") {
-                currentUser = username;
-                loginForm.style.display = "none";
-                chatContainer.style.display = "block";
-                loadMessages();
-                addUserToOnlineList(username);
-            } else {
-                alert("Please enter a username.");
-            }
-        });
-
-        // Logout function
-        logoutButton.addEventListener("click", () => {
-            removeUserFromOnlineList(username);
-            currentUser = "";
-            username = "";
-            loginForm.style.display = "block";
-            chatContainer.style.display = "none";
-            chatBox.innerHTML = "";  // Clear chat box on logout
-        });
-
-        // Add user to online users list
-        function addUserToOnlineList(username) {
-            const onlineRef = ref(database, "onlineUsers/" + username);
-            push(onlineRef, { username });
-            updateOnlineUsersList();
-        }
-
-        // Remove user from online users list
-        function removeUserFromOnlineList(username) {
-            const onlineRef = ref(database, "onlineUsers/" + username);
-            remove(onlineRef);  // Properly remove the user from the online users list
-            updateOnlineUsersList();
-        }
-
-        // Update the online users list (Not needed anymore, but left for consistency)
-        function updateOnlineUsersList() {
-            const onlineUsersRef = ref(database, "onlineUsers");
-            let onlineCount = 0;
-            onChildAdded(onlineUsersRef, (snapshot) => {
-                onlineCount++;
-            });
-        }
-
-        // Load messages from database
-        function loadMessages() {
-            const messagesRef = ref(database, "messages");
-            onChildAdded(messagesRef, (snapshot) => {
-                const message = snapshot.val();
-                const messageElement = document.createElement("div");
-                const time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-
-                // Apply styles based on the username
-                if (message.username === "InkBoyM" || message.username === "innkboym") {
-                    messageElement.style.color = "red"; // InkBoyM's messages in red
-                } else if (message.username === "plsbobuc") {
-                    messageElement.style.color = "#e1c300"; // plsbobuc's messages in a darker yellow
-                } else if (message.username === "DalesLemonadeS") {
-                    messageElement.style.color = "#006400"; // DalesLemonadeS's messages in dark green
-                }
-
-                if (message.image) {
-                    messageElement.innerHTML = `<strong>${message.username}:</strong> <br><img src="${message.image}" width="200">`;
-                } else {
-                    messageElement.innerHTML = `<strong>${message.username}:</strong> ${message.text} <span style="font-size: 0.8em; color: grey;">(${time})</span>`;
-                }
-
-                chatBox.appendChild(messageElement);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            });
-        }
-
-        // Send message function
-        sendButton.addEventListener("click", () => {
-            const text = messageInput.value.trim();
-            if (text !== "") {
-                push(ref(database, "messages"), { username: currentUser, text, timestamp: Date.now() });
-                messageInput.value = "";
-            }
-        });
-
-        // Send image function
-        fileInput.addEventListener("change", () => {
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    push(ref(database, "messages"), { username: currentUser, image: reader.result, timestamp: Date.now() });
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Open the chat in a new about:blank page using <embed> tag
-        openChatButton.addEventListener("click", () => {
-            const newWindow = window.open("about:blank", "_blank");
-            const embed = newWindow.document.createElement("embed");
-            embed.src = "https://inkboym.github.io/chat";
-            embed.width = "100%";
-            embed.height = "100%";
-            newWindow.document.body.appendChild(embed);
-        });
-
-        // Dark mode toggle
-        darkModeButton.addEventListener("click", () => {
-            isDarkMode = !isDarkMode;
-            document.body.classList.toggle("dark-mode", isDarkMode);
-        });
-    </script>
-
+    <title>CordDis</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
-        body.dark-mode { background-color: #121212; color: white; }
-        h2 { margin-top: 20px; font-size: 2rem; }
-        #chatContainer { display: none; padding: 20px; }
-        #chatBox { width: 80%; height: 300px; border: 1px solid #ddd; overflow-y: auto; margin: 10px auto; padding: 10px; text-align: left; background-color: white; border-radius: 8px; }
-        body.dark-mode #chatBox { background-color: #333; border-color: #444; }
-        #messageInput { width: 70%; padding: 10px; border-radius: 5px; }
-        #sendButton, #logoutButton, #openChatButton { padding: 10px; cursor: pointer; margin-top: 5px; border-radius: 5px; }
-        input, button { margin: 5px; padding: 8px; border-radius: 5px; }
-
-        #darkModeButton {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px;
-            background-color: #333;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        #darkModeButton:hover {
-            background-color: #555;
-        }
-
-        /* Smooth animations for elements */
-        #chatBox div {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-
-        button:hover {
-            transform: scale(1.05);
-            transition: transform 0.2s ease-in-out;
-        }
+        body { font-family: Arial, sans-serif; background: #fff; color: #000; transition: 0.3s; }
+        .dark-mode { background: #121212; color: #fff; }
+        .chat-container { width: 300px; margin: auto; }
+        .message { display: flex; align-items: center; }
+        .message img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+        .chat-box { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .dark-mode .chat-box { border-color: #666; }
     </style>
 </head>
 <body>
-
-    <h2>chatty</h2>
-
-    <button id="darkModeButton">Toggle Dark Mode</button>
-
-    <!-- Username Input Form -->
-    <form id="loginForm">
-        <h3>Enter Your Username</h3>
-        <input type="text" id="usernameInput" placeholder="Enter your username" required><br>
-        <button type="submit">Join Chat</button>
-    </form>
-
-    <!-- Chat Container -->
-    <div id="chatContainer">
-        <button id="logoutButton">Log Out</button>
-        <div id="chatBox"></div>
-        <input type="text" id="messageInput" placeholder="Type your message...">
-        <button id="sendButton">Send</button>
-        <input type="file" id="fileInput" accept="image/*">
-        <button id="openChatButton">Open Chat in New Tab</button>
+    <button onclick="toggleDarkMode()">Dark Mode</button>
+    <div id="loginDiv">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="loginError" style="color: red;"></p>
     </div>
+    
+    <div id="chatDiv" style="display:none;">
+        <h2>Chat Room</h2>
+        <div>
+            <button onclick="switchRoom('general')">General</button>
+            <button onclick="switchRoom('memes')">Memes</button>
+            <button onclick="switchRoom('school')">School Chat</button>
+            <button onclick="switchRoom('spam')">Spam</button>
+            <button onclick="switchRoom('clever')">Clever</button>
+        </div>
+        <div class="chat-box" id="chatBox"></div>
+        <input type="file" id="imageUpload">
+        <input type="text" id="messageInput" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        
+        console.log("Initializing Firebase...");
+        
+        const firebaseConfigAuth = {
+            apiKey: "AIzaSyD_RU42yNMYtMWadeZnfmwBy3HMnEHyhWw",
+            authDomain: "corddissignin.firebaseapp.com",
+            projectId: "corddissignin",
+        };
+        
+        const firebaseConfigChat = {
+            apiKey: "AIzaSyCpoTflhDbxhKK-mJ_1hy__B8EBTeBsI3Y",
+            authDomain: "cordischat.firebaseapp.com",
+            projectId: "cordischat",
+        };
+        
+        const authApp = initializeApp(firebaseConfigAuth, "authApp");
+        const chatApp = initializeApp(firebaseConfigChat, "chatApp");
+        
+        const auth = getAuth(authApp);
+        const db = getFirestore(chatApp);
+        
+        let currentRoom = 'general';
+        let currentUser;
+        
+        window.login = function () {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
 
+            // Clear any previous error messages
+            loginError.textContent = '';
+
+            // Basic validation for email and password fields
+            if (!email || !password) {
+                loginError.textContent = "Please enter both email and password.";
+                return;
+            }
+
+            // Basic email format validation
+            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) {
+                loginError.textContent = "Please enter a valid email address.";
+                return;
+            }
+
+            console.log("Attempting login with:", email);
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then(userCredential => {
+                    console.log("Login successful:", userCredential.user);
+                    currentUser = userCredential.user;
+                    document.getElementById('loginDiv').style.display = 'none';
+                    document.getElementById('chatDiv').style.display = 'block';
+                    loadMessages();
+                })
+                .catch(error => {
+                    console.error("Login failed:", error.code, error.message);
+                    loginError.textContent = "Login failed: " + error.message;
+                });
+        }
+        
+        window.sendMessage = function () {
+            if (!currentUser) {
+                alert("You must be logged in to send messages.");
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            if (!messageInput.value.trim()) return;
+            addDoc(collection(db, currentRoom), {
+                text: messageInput.value,
+                user: currentUser.email,
+                timestamp: new Date()
+            })
+            .then(() => console.log("Message sent successfully."))
+            .catch(error => console.error("Error sending message:", error));
+            
+            messageInput.value = '';
+        }
+        
+        window.loadMessages = function () {
+            console.log("Loading messages for room:", currentRoom);
+            
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '';
+            onSnapshot(collection(db, currentRoom), snapshot => {
+                chatBox.innerHTML = '';
+                snapshot.forEach(doc => {
+                    let message = doc.data();
+                    let div = document.createElement('div');
+                    div.classList.add('message');
+                    div.innerHTML = `<strong>${message.user}</strong>: ${message.text}`;
+                    chatBox.appendChild(div);
+                });
+            });
+        }
+        
+        window.switchRoom = function (room) {
+            console.log("Switching to room:", room);
+            currentRoom = room;
+            loadMessages();
+        }
+        
+        window.toggleDarkMode = function () {
+            document.body.classList.toggle('dark-mode');
+        }
+    </script>
 </body>
 </html>
